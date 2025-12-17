@@ -1,0 +1,40 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: release-signatures
+  namespace: disconnected-config
+spec:
+  schedule: '@hourly'
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          containers:
+            - name: release-signatures
+              image: '{{hub fromConfigMap "" "quay-config" "host" hub}}/cache-registry-redhat-io/openshift4/ose-cli:v4.14.0'
+              command:
+                - /bin/bash
+                - '-c'
+                - oc apply -f /data/release-signatures
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                capabilities:
+                  drop:
+                    - ALL
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+              resources:
+                limits:
+                  memory: 512Mi
+                  cpu: 200m
+              volumeMounts:
+                - name: release-signatures
+                  mountPath: /data/
+          serviceAccountName: release-signatures
+          restartPolicy: Never
+          volumes:
+            - name: release-signatures
+              configMap:
+                name: release-signatures

@@ -1,0 +1,26 @@
+# ArgoCD Project used for cluster management. The project has full
+# permissions to manage any namespace on any cluster
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: cluster-management
+  namespace: openshift-gitops
+spec:
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: '*'
+      server: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  roles:
+    # A role which provides read-only access to all applications in the project
+    - name: admin
+      description: Cluster admin access to the project
+      policies:
+        - p, proj:cluster-management:admin, *, *, cluster-management/*, allow
+      groups:
+        - system:cluster-admins
+        - cluster-admins

@@ -1,0 +1,38 @@
+# This application set is used to onboard an application to different clusters.
+# This is for the cluster level components not application resources such as pods
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: EXAMPLE-APP-app-set
+  namespace: apps-gitops
+spec:
+  generators:
+    - clusterDecisionResource:
+        configMapRef: acm-placement
+        labelSelector:
+          # TODO: Change to match expression
+          matchLabels:
+            cluster.open-cluster-management.io/placement: helloworld-placement
+        requeueAfterSeconds: 30
+  template:
+    metadata:
+      annotations:
+        apps.open-cluster-management.io/ocm-managed-cluster: '{{name}}'
+        apps.open-cluster-management.io/ocm-managed-cluster-app-namespace: openshift-gitops
+        argocd.argoproj.io/skip-reconcile: "true"
+      labels:
+        apps.open-cluster-management.io/pull-to-ocm-managed-cluster: "true"
+      name: 'EXAMPLE-APP-ROOT-{{name}}'
+    spec:
+      destination:
+        namespace: helloworld
+        server: https://kubernetes.default.svc
+      project: default
+      source:
+        path: EXAMPLE-APP/overlays/{{name}}
+        repoURL: ""
+      syncPolicy:
+        automated: {}
+        syncOptions:
+          - CreateNamespace=true

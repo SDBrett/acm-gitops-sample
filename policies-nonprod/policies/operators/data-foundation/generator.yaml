@@ -1,0 +1,49 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: gen-policy-generator-odf
+policyDefaults:
+  namespace: policies
+  remediationAction: enforce
+  consolidateManifests: false
+  policySets:
+    - odf-operator
+placementBindingDefaults:
+  name: odf-binding
+policies:
+  - name: odf-operator
+    remediationAction: enforce
+    manifests:
+      - path: namespace.yaml
+      - path: operatorpolicy.yaml
+
+  - name: odf-status
+    remediationAction: InformOnly
+    manifests:
+      - path: health/odf-status.yaml
+    dependencies:
+      - name: odf-operator
+        compliance: Compliant
+
+  - name: odf-operator-status
+    remediationAction: InformOnly
+    manifests:
+      - path: health/operator-status.yaml
+    dependencies:
+      - name: odf-operator
+        compliance: Compliant
+
+  # - name: odf-configure
+  #   remediationAction: enforce
+  #   dependencies:
+  #     - name: odf-operator
+  #       compliance: Compliant
+  #   manifests:
+  #     - path: console.yaml
+  #     - path: storagesystem.yaml
+  #     - path: storagecluster.yaml
+policySets:
+  - name: odf-operator
+    placement:
+      placementName: hub-clusters

@@ -1,0 +1,27 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: gen-policy-clusterhealth
+policyDefaults:
+  namespace: policies
+  remediationAction: inform
+  ## turn off the default compliance annotations
+  categories: []
+  controls: []
+  standards: []
+  policySets:
+    - cluster-health
+placementBindingDefaults:
+  name: cluster-health-binding
+policies:
+  - name: cluster-health-eval
+    remediationAction: enforce
+    manifests:
+      - path: clusterversion.yaml
+      - path: clusteroperator.yaml
+      - path: machineconfigpool.yaml
+policySets:
+  - name: cluster-health
+    placement:
+      placementName: openshift-clusters

@@ -1,0 +1,16 @@
+# By default any ArgoCD Application without the project specified
+# is put into the default project. This manifest removes all
+# permissions from the default project
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: openshift-gitops
+spec:
+  sourceRepos: []
+  sourceNamespaces: []
+  destinations: []
+  namespaceResourceBlacklist:
+    - group: '*'
+      kind: '*'

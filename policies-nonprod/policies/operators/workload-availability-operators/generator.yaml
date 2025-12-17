@@ -1,0 +1,38 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: workload-availability
+policyDefaults:
+  namespace: policies
+  remediationAction: enforce
+  policySets:
+    - workload-availability
+placementBindingDefaults:
+  name: workload-availability-binding
+
+policies:
+  - name: availability-namespace
+    manifests:
+      - path: namespace.yaml
+
+  - name: node-health-check-operator
+    manifests:
+      - path: node-health-check/operatorpolicy.yaml
+
+  - name: node-health-check-config
+    manifests:
+      - path: node-health-check/config
+
+  - name: node-self-remediation-operator
+    manifests:
+      - path: node-self-remediation/operatorpolicy.yaml
+
+  - name: node-self-remediation-config
+    manifests:
+      - path: node-self-remediation/config
+
+policySets:
+  - name: workload-availability
+    placement:
+      placementName: openshift-clusters

@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-operator-index-osp
+  namespace: disconnected-config
+data:
+  icsp.yaml: |
+    #### Comments needed to fill the data via template ####
+    #### This file will be installed via cronjob. Change the content via CGU ###
+    #### Note changing ICSP policies generates a new MC causing pod eviction (without reboot) ####
+    {{ fromConfigMap "disconnected-config" "custom-operator-index-osp-generated" "icsp.yaml" | autoindent }}
+  change_tracker: '{{ fromConfigMap "disconnected-config" "custom-operator-index-osp-generated" "change_tracker" }}'

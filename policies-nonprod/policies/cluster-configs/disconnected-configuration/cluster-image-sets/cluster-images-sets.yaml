@@ -1,0 +1,23 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: ConfigurationPolicy
+metadata:
+  name: cluster-image-sets-template
+spec:
+  remediationAction: enforce
+  severity: medium
+  object-templates-raw: |
+    {{- $object := (fromConfigMap "openshift-config" "managed-clusters-initial-versions" "versions") }}
+    {{- range $version := split "/" $object }}
+    - complianceType: musthave
+      objectDefinition:
+        apiVersion: hive.openshift.io/v1
+        kind: ClusterImageSet
+        metadata:
+          name: CUSTOMER_NAME-img{{ $version }}-x86-64
+          labels:
+            velero.io/exclude-from-backup: "true"
+            visible: 'true'
+        spec:
+          releaseImage: '{{ (lookup "route.openshift.io/v1" "Route" "quay" "registry-quay").spec.host }}/oc-mirror/openshift/release-images:{{ $version }}-x86_64'
+    {{- end }}

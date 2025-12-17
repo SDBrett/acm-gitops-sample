@@ -1,0 +1,59 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: openshift-gitops
+policyDefaults:
+  namespace: policies
+  remediationAction: enforce
+placementBindingDefaults:
+  name: openshift-gitops-binding
+
+policies:
+  - name: openshift-gitops-operator-hub-cluster
+    manifests:
+      - path: operator/namespace.yaml
+      - path: operator/operatorGroup.yaml
+      - path: operator/subscription.yaml
+    policySets:
+      - openshift-gitops-hub-clusters
+
+  - name: openshift-gitops-operator-workload-cluster
+    manifests:
+      - path: operator/namespace.yaml
+      - path: operator/operatorGroup.yaml
+      - path: operator/subscription.yaml
+        patches:
+          - apiVersion: operators.coreos.com/v1alpha1
+            kind: Subscription
+            metadata:
+              name: openshift-gitops-operator
+            spec:
+              config:
+                env:
+                  - name: ARGOCD_CLUSTER_CONFIG_NAMESPACES
+                    # these are namespaces in which you install argocd, those instances can then have namespaces: All Namespaces to allow deployment to any namespace.
+                    value: apps-gitops
+    policySets:
+      - openshift-gitops-workload-clusters
+
+  - name: gitops-root-config-hub-clusters
+    manifests:
+      - path: hub-cluster/argocd-instances/gitops-root
+    policySets:
+      - openshift-gitops-hub-clusters
+
+  - name: apps-gitops-config-workload-clusters
+    manifests:
+      - path: workload-clusters/gitops-acm-rbac.yaml
+      - path: workload-clusters/argocd-instances/apps-gitops
+    policySets:
+      - openshift-gitops-hub-clusters
+
+policySets:
+  - name: openshift-gitops-hub-clusters
+    placement:
+      placementName: hub-clusters
+  - name: openshift-gitops-workload-clusters
+    placement:
+      placementName: workload-clusters

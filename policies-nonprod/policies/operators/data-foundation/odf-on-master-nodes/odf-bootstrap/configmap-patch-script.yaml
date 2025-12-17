@@ -1,0 +1,60 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: odf-bootstrap-script
+  namespace: openshift-storage
+data:
+  script.sh: |
+    NAMESPACE=openshift-storage
+    STORAGE_CLUSTER_NAME=ocs-storagecluster
+    CONFIGMAP_NAME=odf-master-deploy-readiness
+    SKIP_SCHEDULER_PATCH=false
+    CONFIG_MAP_EXISTS=false
+
+    # Removing the configMap or changing value of key readyToDeploy will rerun schedueler patch task
+
+    echo "Checking if readyToDeploy already configured and set to true"
+    if oc -n $NAMESPACE get cm "$CONFIGMAP_NAME" &> /dev/null; then
+      CONFIG_MAP_EXISTS=true
+      IS_READY_TO_DEPLOY=$(oc -n $NAMESPACE extract configmap/$CONFIGMAP_NAME --keys=readyToDeploy --to=-)
+      if [ "IS_READY_TO_DEPLOY" = "true" ]; then SKIP_SCHEDULER_PATCH=true; fi
+      EXIT_CODE=$?
+      if [ $EXIT_CODE != 0 ]; then exit $EXIT_CODE; fi
+    fi
+
+    echo "Checking if masters are already schedulable"
+    if [ $SKIP_SCHEDULER_PATCH = "false" ]; then
+      echo "Making masters schedulable"
+      oc patch schedulers.config.openshift.io cluster -p '{"spec":{"mastersSchedulable":true}}' --type merge
+      EXIT_CODE=$?
+      if [ $EXIT_CODE != 0 ]; then exit $EXIT_CODE; fi
+    fi
+
+    # Set readyToDeploy config map as true
+    echo "Setting readyToDeploy flag as true in configMap"
+    if [ $CONFIG_MAP_EXISTS = false ]; then
+      oc -n $NAMESPACE create cm $CONFIGMAP_NAME --from-literal readyToDeploy="true"
+    else
+      oc -n $NAMESPACE patch cm $CONFIGMAP_NAME -p '{"data":{"readyToDeploy":"true"}}'
+    fi
+    EXIT_CODE=$?
+    if [ $EXIT_CODE != 0 ]; then exit $EXIT_CODE; fi
+
+    # Wait for the pod StorageCluster to be ready
+    echo "Waiting for StorageCluster to be created"
+    oc -n $NAMESPACE wait --for=create storagecluster.ocs.openshift.io/$STORAGE_CLUSTER_NAME --timeout=60s
+    EXIT_CODE=$?
+    if [ $EXIT_CODE != 0 ]; then exit $EXIT_CODE; fi
+
+    # Wait for the pod StorageCluster to be ready
+    echo "Waiting for StorageCluster to enter ready state"
+    oc -n $NAMESPACE wait --for=jsonpath='{.status.phase}'=Ready storagecluster.ocs.openshift.io/$STORAGE_CLUSTER_NAME --timeout=600s
+    EXIT_CODE=$?
+    if [ $EXIT_CODE != 0 ]; then exit $EXIT_CODE; fi
+
+    # When the StorageCluster is in a Ready state disable scheduling on masters
+    echo "Disabling master scheduling"
+    oc patch schedulers.config.openshift.io cluster -p '{"spec":{"mastersSchedulable":false}}' --type merge
+    EXIT_CODE=$?
+    if [ $EXIT_CODE != 0 ]; then exit $EXIT_CODE; fi

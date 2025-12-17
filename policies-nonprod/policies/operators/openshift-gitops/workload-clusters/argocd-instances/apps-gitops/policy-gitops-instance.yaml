@@ -1,0 +1,95 @@
+---
+apiVersion: argoproj.io/v1beta1
+kind: ArgoCD
+metadata:
+  name: apps-gitops
+  namespace: apps-gitops
+spec:
+  monitoring:
+    enabled: true
+  applicationSet: {}
+  statusBadgeEnabled: true
+  sourceNamespaces:
+    - '*-gitops'
+  resourceIgnoreDifferences:
+    resourceIdentifiers:
+      - group: openshift.io
+        kind: route
+        customization:
+          jsonPointers:
+            - /spec/host
+  controller:
+    resources:
+      limits:
+        cpu: 2
+        memory: 10Gi
+      requests:
+        cpu: 1
+        memory: 5Gi
+  ha:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+    enabled: false
+  redis:
+    resources:
+      limits:
+        cpu: 250m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 32Mi
+  repo:
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 96Mi
+  server:
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+    route:
+      enabled: true
+      tls:
+        termination: reencrypt
+        insecureEdgeTerminationPolicy: Redirect
+  sso:
+    dex:
+      resources:
+        limits:
+          cpu: 250m
+          memory: 256Mi
+        requests:
+          cpu: 10m
+          memory: 96Mi
+      openShiftOAuth: true
+    provider: dex
+  rbac:
+    defaultPolicy: ''
+    policy: |
+      g, system:cluster-admins, role:admin
+      g, cluster-admins, role:admin
+      g, ocpadmin, role:admin
+      g, apps-base-gitops-admins, role:admin
+    scopes: '[groups]'
+  resourceExclusions: |
+    - apiGroups:
+      - tekton.dev
+      clusters:
+      - '*'
+      kinds:
+      - TaskRun
+      - PipelineRun
+  extraConfig:
+    application.resourceTrackingMethod: annotation+label

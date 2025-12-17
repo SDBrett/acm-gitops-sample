@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-gitops-operator
+  labels:
+    openshift-gitops-operator: 'true'
+    openshift.io/cluster-monitoring: 'true'
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-gitops
+  labels:
+    openshift-gitops-operator: 'true'
+    openshift.io/cluster-monitoring: 'true'

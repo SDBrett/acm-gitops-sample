@@ -1,0 +1,9 @@
+---
+# This is the namespace that the argoCD Application resources for the
+# application would be created.
+# Maintaining the "-gitops" suffix will help limit the namespaces that
+# the ArgoCD instance will sync Applications from
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: EXAMPLE-APP-gitops

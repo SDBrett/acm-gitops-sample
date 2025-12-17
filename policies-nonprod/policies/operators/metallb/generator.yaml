@@ -1,0 +1,22 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: metallb-policies
+policyDefaults:
+  namespace: policies
+  remediationAction: enforce
+placementBindingDefaults:
+  name: metallb-operator-binding
+
+policies:
+  - name: metallb-operator
+    manifests:
+      - path: namespace.yaml
+      - path: operatorpolicy.yaml
+      - path: metallb.yaml
+
+policySets:
+  - name: metallb-operator-policyset
+    placement:
+      placementName: openshift-clusters

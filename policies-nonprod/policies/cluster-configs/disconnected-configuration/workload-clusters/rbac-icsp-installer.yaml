@@ -1,0 +1,35 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: icsp-installer
+  namespace: disconnected-config
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: icsp-installer
+rules:
+  - apiGroups:
+      - "operator.openshift.io"
+    resources:
+      - imagecontentsourcepolicies
+    verbs:
+      - get
+      - list
+      - create
+      - patch
+      - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: icsp-installer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: icsp-installer
+subjects:
+  - kind: ServiceAccount
+    name: icsp-installer
+    namespace: disconnected-config

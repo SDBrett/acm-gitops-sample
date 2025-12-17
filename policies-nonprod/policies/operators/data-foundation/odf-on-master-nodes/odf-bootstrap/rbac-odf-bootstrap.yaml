@@ -1,0 +1,62 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: odf-bootstrap
+  namespace: openshift-storage
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - '*'
+  - apiGroups:
+      - ocs.openshift.io
+    resources:
+      - storageclusters
+    verbs:
+      - create
+      - get
+      - watch
+      - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: odf-bootstrap
+  namespace: openshift-storage
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: odf-bootstrap
+subjects:
+  - kind: ServiceAccount
+    name: odf-bootstrap
+    namespace: openshift-storage
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: odf-bootstrap
+rules:
+  - apiGroups:
+      - config.openshift.io
+    resources:
+      - schedulers
+    verbs:
+      - patch
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: odf-bootstrap
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: odf-bootstrap
+subjects:
+  - kind: ServiceAccount
+    name: odf-bootstrap
+    namespace: openshift-storage

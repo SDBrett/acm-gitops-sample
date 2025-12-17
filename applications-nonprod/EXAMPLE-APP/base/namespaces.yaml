@@ -1,0 +1,7 @@
+---
+# This is the namespace that the application resources like pods, configMaps etc
+# will be deployed to.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: EXAMPLE-APP

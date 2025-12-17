@@ -1,0 +1,29 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: odf-bootstrap
+  namespace: openshift-storage
+spec:
+  selector: {}
+  template:
+    metadata:
+      name: odf-bootstrap
+    spec:
+      containers:
+        - name: odf-bootstrap
+          image: image-registry.openshift-image-registry.svc:5000/openshift/cli
+          volumeMounts:
+            - name: odf-bootstrap
+              mountPath: /scripts
+          command:
+            - /bin/bash
+            - '-c'
+            - /scripts/script.sh
+      volumes:
+        - name: odf-bootstrap
+          configMap:
+            name: odf-bootstrap-script
+            defaultMode: 0755
+      restartPolicy: Never
+      serviceAccountName: odf-bootstrap

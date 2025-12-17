@@ -1,0 +1,11 @@
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  namespace: metallb-system
+  name: ipaddrpool1
+  labels:
+    zone: ocp1
+spec:
+  addresses:
+    - 172.22.98.100-172.22.98.105

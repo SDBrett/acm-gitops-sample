@@ -1,0 +1,78 @@
+---
+apiVersion: argoproj.io/v1beta1
+kind: ArgoCD
+metadata:
+  name: gitops-root
+  namespace: openshift-gitops
+spec:
+  monitoring:
+    enabled: true
+  statusBadgeEnabled: true
+  resourceIgnoreDifferences:
+    resourceIdentifiers:
+      - group: openshift.io
+        kind: route
+        customization:
+          jsonPointers:
+            - /spec/host
+      # Prevent conflict if subscripts are also managed by policies
+      - group: operators.coreos.com
+        kind: subscription
+        customization:
+          jsonPointers:
+            - /spec/channel
+            - /spec/installPlanApproval
+  resourceExclusions: |
+    - apiGroups:
+      - tekton.dev
+      clusters:
+      - '*'
+      kinds:
+      - TaskRun
+      - PipelineRun
+  ha:
+    enabled: false
+  repo:
+    env:
+      - name: KUSTOMIZE_PLUGIN_HOME
+        value: /etc/kustomize/plugin
+      # - name: POLICY_GEN_ENABLE_HELM
+      #   value: "true"
+    initContainers:
+      - name: policy-generator-install
+        args:
+          - -c
+          - cp /policy-generator/PolicyGenerator-not-fips-compliant /policy-generator-tmp/PolicyGenerator
+        command:
+          - /bin/bash
+        image: registry.redhat.io/rhacm2/multicluster-operators-subscription-rhel9:2.14.0-1
+        imagePullPolicy: Always
+        volumeMounts:
+          - mountPath: /policy-generator-tmp
+            name: policy-generator
+    volumeMounts:
+      - mountPath: /etc/kustomize/plugin/policy.open-cluster-management.io/v1/policygenerator
+        name: policy-generator
+    volumes:
+      - emptyDir: {}
+        name: policy-generator
+  server:
+    route:
+      enabled: true
+      tls:
+        termination: reencrypt
+        insecureEdgeTerminationPolicy: Redirect
+  sso:
+    dex:
+      openShiftOAuth: true
+    provider: dex
+  rbac:
+    defaultPolicy: role:readonly
+    policy: |
+      g, system:cluster-admins, role:admin
+      g, cluster-admins, role:admin
+      g, ocpadmin, role:admin
+    scopes: '[groups]'
+  kustomizeBuildOptions: --enable-alpha-plugins
+  extraConfig:
+    application.resourceTrackingMethod: annotation+label

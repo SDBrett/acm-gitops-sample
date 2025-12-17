@@ -1,0 +1,32 @@
+# Optional Project to that would be used to for the purpose of pushing
+# ArgoCD resource to workload clusters. Helps with separation of
+# admin responsibilities
+# ArgoCD Project used for cluster management. The project has full
+# permissions to manage any namespace on any cluster
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: applications
+spec:
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: 'openshift-gitops'
+      server: '*'
+    - namespace: 'apps-gitops'
+      server: '*'
+  clusterResourceWhitelist:
+    - group: 'argoproj.io'
+      kind: 'ApplicationSet'
+    - group: 'argoproj.io'
+      kind: 'Application'
+  roles:
+    # A role which provides read-only access to all applications in the project
+    - name: admin
+      description: Admin access to the applications project
+      policies:
+        - p, proj:applications:admin, *, *, applications/*, allow
+      groups:
+        - system:cluster-admins
+        - cluster-admins

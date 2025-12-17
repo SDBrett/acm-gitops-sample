@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redhat-operators-index
+  namespace: disconnected-config
+data:
+  icsp.yaml: |
+    #### Comments needed to fill the data via template ####
+    #### This file will be installed via cronjob. Change the content via CGU ###
+    #### Note changing ICSP policies generates a new MC causing pod eviction (without reboot) ####
+    {{ fromConfigMap "disconnected-config" "redhat-operators-index-generated" "icsp.yaml" | autoindent }}
+  change_tracker: '{{ fromConfigMap "disconnected-config" "redhat-operators-index-generated" "change_tracker" }}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: certified-operators-index
+  namespace: disconnected-config
+data:
+  icsp.yaml: |
+    #### Comments needed to fill the data via template ####
+    #### This file will be installed via cronjob. Change the content via CGU ###
+    #### Note changing ICSP policies generates a new MC causing pod eviction (without reboot) ####
+    {{ fromConfigMap "disconnected-config" "certified-operators-index-generated" "icsp.yaml" | autoindent }}
+  change_tracker: '{{ fromConfigMap "disconnected-config" "certified-operators-index-generated" "change_tracker" }}'

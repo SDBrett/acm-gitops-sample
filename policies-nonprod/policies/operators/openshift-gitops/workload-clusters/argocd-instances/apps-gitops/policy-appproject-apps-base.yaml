@@ -1,0 +1,53 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps-base
+  namespace: apps-gitops
+spec:
+  sourceNamespaces:
+    - apps-gitops
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: security.openshift.io
+      kind: SecurityContextConstraints
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+    - group: user.openshift.io
+      kind: Group
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+  destinations:
+    - namespace: apps-gitops
+      server: https://kubernetes.default.svc
+    - namespace: '*'
+      server: '*'
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: ResourceQuota
+    - group: argoproj.io
+      kind: Application
+    - group: argoproj.io
+      kind: ApplicationSet
+    - group: argoproj.io
+      kind: AppProject
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: Role
+  # sourceRepos:
+  #   -
+  roles:
+    # A role which provides read-only access to all applications in the project
+    - name: application-administrators
+      description: Permissions to manage root applications
+      policies:
+        - p, proj:cluster-management:admin, *, *, cluster-management/*, allow
+      groups:
+        - system:cluster-admins
+        - cluster-admins

@@ -1,0 +1,25 @@
+# This is the root application which will sync from the application owners repo
+# The base will contain most of the info but it's very likely that the path will change
+# for each cluster.
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: EXAMPLE-APP-root
+  namespace: EXAMPLE-APP-gitops
+spec:
+  destination:
+    namespace: APP-NAMESPACE
+    server: https://kubernetes.default.svc
+  project: EXAMPLE-APP
+  source:
+    path: overlays/CLUSTER-NAME
+    repoURL: ''
+    targetRevision: main
+  syncPolicy:
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+    automated:
+      prune: true
+      selfHeal: true

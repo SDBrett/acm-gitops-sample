@@ -1,0 +1,25 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: gen-policy-clusterobservability
+policyDefaults:
+  namespace: policies
+  remediationAction: enforce
+  consolidateManifests: false
+  policySets:
+    - cluster-observability-operator
+placementBindingDefaults:
+  name: cluster-observability-binding
+policies:
+  - name: cluster-observability-operator
+    remediationAction: enforce
+    manifests:
+      - path: namespace.yaml
+      - path: operatorpolicy.yaml
+      - path: health/cluster-observability-status.yaml
+        remediationAction: InformOnly
+policySets:
+  - name: cluster-observability-operator
+    placement:
+      placementName: hub-clusters

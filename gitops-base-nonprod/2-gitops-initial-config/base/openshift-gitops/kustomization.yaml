@@ -1,0 +1,10 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: openshift-gitops
+resources:
+  - default-project.yaml
+  - cluster-management-project.yaml
+  - acm-app.yaml
+  - gitops-root-app.yaml
+  - gitops-root-instance.yaml

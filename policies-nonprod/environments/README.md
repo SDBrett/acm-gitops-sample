@@ -1,0 +1,1 @@
+This directory is for storing environment specific policies. Typically these policies are used to provide cluster specific configurations.

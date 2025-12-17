@@ -1,0 +1,52 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: ConfigurationPolicy
+metadata:
+  name: certified-operators-dynamic
+spec:
+  remediationAction: enforce
+  object-templates-raw: |
+    - complianceType: mustonlyhave
+      objectDefinition:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: certified-operators-index-generated
+          namespace: disconnected-config
+        data:
+          icsp.yaml: |
+            apiVersion: operator.openshift.io/v1alpha1
+            kind: ImageContentSourcePolicy
+            metadata:
+              labels:
+                version: '{{ fromClusterClaim "openshiftversion-major-minor" }}'
+                operators.openshift.org/catalog: "true"
+              name: certified-operators
+            spec:
+              repositoryDigestMirrors:
+              {{hub- $object := fromConfigMap "policies" (printf "disconnected-certified-operators-%s" (index .ManagedClusterLabels "openshiftVersion-major-minor") ) "imageContentSourcePolicy.yaml"  hub}}
+              {{hub- range $item := split "\n" $object  hub}}
+                {{hub- if contains "source: " $item  hub}}
+                  {{hub- $midStep := split "/" $item hub}}
+                  {{hub- $operator := $midStep._1 hub}}
+              - mirrors:
+                - ""
+                {{hub $item | autoindent hub}}
+                {{hub- end hub}}
+              {{hub- end hub}}
+          change_tracker: resversion-{{hub (lookup "v1" "ConfigMap" "policies" (printf "disconnected-certified-operators-%s" (index .ManagedClusterLabels "openshiftVersion-major-minor") ) ).metadata.resourceVersion hub}}-{{ fromClusterClaim "openshiftversion-major-minor" }}
+    - complianceType: mustonlyhave
+      objectDefinition:
+        apiVersion: operators.coreos.com/v1alpha1
+        kind: CatalogSource
+        metadata:
+          name: certified-operators-index
+          namespace: openshift-marketplace
+        spec:
+          {{hub- $object := fromConfigMap "policies" (printf "disconnected-certified-operators-%s" (index .ManagedClusterLabels "openshiftVersion-major-minor") ) "singleCatalogSource.yaml"  hub}}
+          {{hub- range $item := split "\n" $object  hub}}
+            {{hub- if contains "image: " $item  hub}}
+          {{hub $item | autoindent hub}}
+          sourceType: grpc
+            {{hub- end hub}}
+          {{hub- end hub}}

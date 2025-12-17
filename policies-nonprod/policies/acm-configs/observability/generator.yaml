@@ -1,0 +1,53 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: gen-policy-generator-observe
+policyDefaults:
+  namespace: policies
+  remediationAction: enforce
+  consolidateManifests: false
+  policySets:
+    - acm-observability
+placementBindingDefaults:
+  name: acm-observe-binding
+policies:
+  - name: acm-observe
+    remediationAction: enforce
+    manifests:
+      - path: namespace.yaml
+      - path: console.yaml
+      - path: pull-secret.yaml
+      - path: objectbucketclaim.yaml
+        extraDependencies:
+          - name: odf-status
+            kind: Policy
+            compliance: Compliant
+      - path: noobaa-cert-secret.yaml
+        extraDependencies:
+          - name: odf-status
+            kind: Policy
+            compliance: Compliant
+      - path: thanos-secret.yaml
+        extraDependencies:
+          - name: acm-observe5
+            kind: ConfigurationPolicy
+            compliance: Compliant
+      - path: observability.yaml
+        extraDependencies:
+          - name: thanos-secret
+            kind: ConfigurationPolicy
+            compliance: Compliant
+
+  - name: acm-observe-status
+    remediationAction: inform
+    dependencies:
+      - name: acm-observe
+        compliance: Compliant
+    manifests:
+      - path: health/acm-observability-status.yaml
+
+policySets:
+  - name: acm-observability
+    placement:
+      placementName: openshift-clusters

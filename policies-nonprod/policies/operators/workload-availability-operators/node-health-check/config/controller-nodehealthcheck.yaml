@@ -1,0 +1,24 @@
+---
+apiVersion: remediation.medik8s.io/v1alpha1
+kind: NodeHealthCheck
+metadata:
+  name: controller-node-healthcheck
+spec:
+  minHealthy: 51%
+  remediationTemplate:
+    apiVersion: self-node-remediation.medik8s.io/v1alpha1
+    kind: SelfNodeRemediationTemplate
+    name: self-node-remediation-resource-deletion-template
+    namespace: openshift-operators
+  selector:
+    matchExpressions:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        values: []
+  unhealthyConditions:
+    - duration: 300s
+      status: 'False'
+      type: Ready
+    - duration: 300s
+      status: Unknown
+      type: Ready

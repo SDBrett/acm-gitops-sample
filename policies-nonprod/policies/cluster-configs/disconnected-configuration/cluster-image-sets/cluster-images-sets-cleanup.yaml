@@ -1,0 +1,39 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: ConfigurationPolicy
+metadata:
+  name: cluster-image-sets-cleanup
+spec:
+  remediationAction: enforce
+  severity: medium
+  object-templates-raw: |
+    {{- $versionString := (fromConfigMap "openshift-config" "managed-clusters-initial-versions" "versions") }}
+    {{- range $cimageset := (lookup "hive.openshift.io/v1" "ClusterImageSet" "" "").items }}
+      {{ $step1 := split "img" $cimageset.metadata.name }}
+      {{ $step2 := split "-" $step1._1 }}
+      {{ $version := $step2._0 }}
+      {{ $found := "false" }}
+      {{- range $definedVersion := split "/" $versionString }}
+        {{- /* Loop through the defined versions and see if version is there */ -}}
+        {{- if eq $version $definedVersion }}
+          {{ $found = "true" }}
+        {{- end }}
+      {{- end }}
+      {{- /* if the cluster image set is not part of the defined versions on the config map, delete it */ -}}
+      {{- if eq $found "false" }}
+    - complianceType: mustnothave
+      objectDefinition:
+        apiVersion: hive.openshift.io/v1
+        kind: ClusterImageSet
+        metadata:
+          name: '{{ $cimageset.metadata.name }}'
+      {{- /* if the cluster image set does not contain the name CUSTOMER_NAME, delete it */ -}}
+      {{- else if not (contains "CUSTOMER_NAME" $cimageset.metadata.name)  }}
+    - complianceType: mustnothave
+      objectDefinition:
+        apiVersion: hive.openshift.io/v1
+        kind: ClusterImageSet
+        metadata:
+          name: '{{ $cimageset.metadata.name }}'
+      {{- end }}
+    {{- end }}

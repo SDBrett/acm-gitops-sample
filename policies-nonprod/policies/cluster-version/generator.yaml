@@ -1,0 +1,31 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: gen-policy-generator
+policyDefaults:
+  namespace: policies
+  remediationAction: inform
+  ## turn off the default compliance annotations
+  categories: []
+  controls: []
+  standards: []
+  policySets:
+    - cluster-version
+placementBindingDefaults:
+  name: cluster-version-binding
+policies:
+  - name: admin-acks
+    remediationAction: enforce
+    manifests:
+      - path: admin-acks-configmap.yaml
+
+  ## uncomment to showcase TALM
+  # - name: ocp-upgrade
+  #   remediationAction: inform
+  #   manifests:
+  #     - path: clusterversion.yaml
+policySets:
+  - name: cluster-version
+    placement:
+      placementName: openshift-clusters

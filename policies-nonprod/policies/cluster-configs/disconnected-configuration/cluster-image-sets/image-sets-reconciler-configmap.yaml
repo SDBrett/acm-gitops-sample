@@ -1,0 +1,15 @@
+---
+## This configmap points the clusterimageset reconciliation to a non-existent git repo instead of the upstream one
+# this prevents the recreation of clusterimagesets.  Only those defined in this git repo are therefor created.
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: cluster-image-set-git-repo
+  namespace: multicluster-engine
+data:
+  description: "block acccess to uptream clusterimagesets"
+  channel: stable
+  gitRepoBranch: release-2.8
+  gitRepoPath: clusterImageSets
+  gitRepoUrl: 'https://localhost/falserepo-toprevent-reconcile.git'
+  insecureSkipVerify: 'true'

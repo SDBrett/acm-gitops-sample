@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: policies
+resources:
+  - baremetal-clusters.yaml
+  - hub-clusters.yaml
+  - managed-cluster-placements.yaml
+  - odf-clusters.yaml
+  - openshift-clusters.yaml
+  - self-remediation-clusters.yaml
+  - sitea-clusters.yaml
+  - siteb-clusters.yaml
+  - virtualization-host-clusters.yaml
+  - vsphere-clusters.yaml
+  - workload-clusters.yaml

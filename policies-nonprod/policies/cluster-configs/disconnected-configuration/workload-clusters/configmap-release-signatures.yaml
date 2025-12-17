@@ -1,0 +1,50 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: disconnected-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: release-signatures
+  namespace: disconnected-config
+data:
+  release-signatures: '{{hub fromConfigMap "" "release-signatures" "release-signatures" hub}}'
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-signatures
+  namespace: disconnected-config
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: release-signature-configmaps
+  namespace: openshift-config-managed
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - create
+      - patch
+      - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: release-signature-configmaps
+  namespace: openshift-config-managed
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: release-signature-configmaps
+subjects:
+  - kind: ServiceAccount
+    name: release-signatures
+    namespace: disconnected-config

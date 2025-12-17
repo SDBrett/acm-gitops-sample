@@ -1,0 +1,43 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: ocp1-cluster-configs
+policyDefaults:
+  namespace: policies
+  remediationAction: enforce
+  policySets:
+    - ocp1-cluster-configs
+placementBindingDefaults:
+  name: ocp1-cluster-configs-binding
+
+policies:
+  - name: ocp1-cluster-info
+    manifests:
+      - path: cluster-info
+    policySets:
+      - ocp1-cluster-configs
+
+  - name: ocp1-metallb-config
+    manifests:
+      - path: cluster-networking/metallb
+
+  - name: ocp1-ca-trust-bundle
+    manifests:
+      - path: proxy/ca-trust-bundle.yaml
+
+  - name: ocp1-proxy-config
+    manifests:
+      - path: proxy/ocp1-proxy.yaml
+    dependencies:
+      - name: ocp1-ca-trust-bundle
+    ignorePending: true
+
+  - name: ocp1-ldap-config
+    manifests:
+      - path: oauth/ocp1-ldap-config.yaml
+
+policySets:
+  - name: ocp1-cluster-configs
+    placement:
+      placementName: local-cluster

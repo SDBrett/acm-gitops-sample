@@ -1,0 +1,27 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: service-mesh
+policyDefaults:
+  namespace: policies
+  remediationAction: enforce
+  policySets:
+    - service-mesh
+placementBindingDefaults:
+  name: service-mesh-binding
+
+policies:
+  - name: service-mesh-operator
+    manifests:
+      - path: operatorpolicy.yaml
+
+  - name: default-istio-control-plane
+    manifests:
+      - path: namespace.yaml
+      - path: default-istio.yaml
+
+policySets:
+  - name: service-mesh
+    placement:
+      placementName: hub-clusters

@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-info
+  namespace: openshift-config
+  annotations:
+    description: config map to store cluster specific information used by ACM policies
+data:
+  my-key: my-value

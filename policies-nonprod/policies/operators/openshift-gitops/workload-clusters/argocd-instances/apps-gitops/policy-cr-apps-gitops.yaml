@@ -1,0 +1,47 @@
+# Permissions which control the full extent of ArgoCD cluster level permissions
+# These will likely need expansion as added permissions are required.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: apps-gitops-service-account
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - apps
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - image.openshift.io
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - route.openshift.io
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - apps.openshift.io
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - argocds
+      - appprojects
+      - applications
+      - applicationsets
+    verbs:
+      - '*'

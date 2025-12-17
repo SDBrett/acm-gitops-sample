@@ -1,0 +1,4 @@
+patch*.patch
+rsync*
+promote*.sh
+*.patch

@@ -1,0 +1,101 @@
+# Policies
+
+- [Policies](#policies)
+  - [Overview](#overview)
+  - [Repo Directory Structure](#repo-directory-structure)
+    - [environments](#environments)
+    - [local-cluster](#local-cluster)
+    - [kustomize-configs](#kustomize-configs)
+    - [policies](#policies-1)
+  - [RHACM Cluster Structure](#rhacm-cluster-structure)
+  - [Policy Generator](#policy-generator)
+  - [Placements](#placements)
+  - [Kustomization Configurations](#kustomization-configurations)
+    - [Important Items](#important-items)
+
+
+## Overview
+This repo contains the policies used to workload and management clusters. 
+
+The repo structure has been designed to enable promotion of configuration changes from the development to the production environment. The structure is based on the use of separate repos for the production and development environment.
+
+## Repo Directory Structure
+The repo directory structure has been setup to provide logical separation of different components and simplify the promotion process. This section will look at the purpose of the directories.
+
+```
+├── environments
+│   ├── dev
+│   └── prod
+├── kustomize-configs
+├── local-cluster
+└── policies
+    ├── acm-configs
+    ├── acm-placements
+    ├── cluster-configs
+    ├── cluster-health
+    ├── cluster-validations
+    ├── cluster-version
+    ├── kustomize-configs
+    ├── operators
+    └── security
+```
+
+### environments
+The environments directory is used to provide environment specific configurations. Ignoring the environment directory when comparing the development and production repos will help simplify the merge process.
+
+**environments/ENVIRONMENT_NAME**
+The environments directory contains a subdirectory for each environment where the kustomization overlays are set for the environment. Here we set the namespace name to deploy the policies in, the suffix for the PoliySet naming override., and the ClusterSet to select the array of clusters to be considered as targets for that environments placements.
+
+### local-cluster
+Should only be included in the environment which the ACM hub is expected to be managed. When is the "prod" environment. Configuration here would change the behaviour of the ACM Hub `ManagedCluster` object to include it in the `ClusterSet` created as part of the environment.
+
+### kustomize-configs
+There are two kustomize-configs directory, one in the root directory of the repo and one in the policies directory. These directories contain files which are used by kustomize transformers to ensure that various are consistent through the generated policies.
+
+Specifics of these files is covered later in this document.
+
+### policies
+The policies directories contains the files used to generate configuration policies. The operators subdirectory is where operator deployment and configuration files are located.
+
+## RHACM Cluster Structure
+Each cluster should be included in a ClusterSet that matches the environments/ENVIRONMENT_NAME which is targeting them. The naming convention used is `ENVIRONMENT_NAME-clusters`; for the dev environment that would be `dev-clusters`
+
+To control subsets of clusters allowing specific features we will use labels applied to the `ManagedCluster` resource. For example adding the label `ocp-virt-enabled: true` would add that cluster to the `virtualization-hosts` placement and then the virtualization policies would be applied.
+
+## Policy Generator
+Policies are created using the policy generator plugin for kustomize. Policy Generator creates policy manifests from Kubernetes manifest files using a PolicyGenerator CR.
+
+The `generator.yaml` files located in the subdirectories or the `policies` directory are used to various settings required for the policies that it is intended to create.
+
+Information about the policy generator plugin can be found here: [Git Repo](https://github.com/open-cluster-management-io/policy-generator-plugin)
+
+Policy generation can be tested localled by installing kustomize and the policy generator plugin on your local machine.
+
+## Placements
+Several placements have been created to control the clusters that policies are deployed to.
+
+- **hub-cluster:** For deploying policies to hub clusters
+- **openshift-clusters:** Any OpenShift cluster
+- **virtualization-hosts:** Managed OpenShift clusters which have the label `ocp-virt-enabled: true`
+- **workload-clusters:** Managed clusters which are not the hub cluster
+
+In addition there is a policy called `managed-cluster-placements` which creates a placement for each managed cluster.
+
+## Kustomization Configurations
+There are a number of configurations controlling behaviour of kustomize included to make the process more complete and easier to implement. Notice there is little information in the specific `environments/ENVIRONMENT_NAME` kustomizations.
+
+Kustomize configurations and purpose:
+
+- **environments/ENVIRONMENT_NAME/kustomize-configs/policyset-suffixer.yaml** - Specifies the suffix to be applied to all `PolicySets` generated by the PolicyGenerators. This is used over the `suffix` specification in kustomize to control that it is only applied to the `PolicySets`
+
+- **kustomize-configs/set-clusterset-references.yaml** - Updates the clusterset specification label on the `ManagedCluster` (local-cluster) if included. Also updates the clusterset specification on all `Placements` and `ManagedClusterSetBindings`. Sets the name of the `ManagedClusterSetBinding` to match the name of the ClusterSet per RHACM requirements.
+
+- **policies/kustomize-configs/namespace-namereference.yaml** - Updates all dependencies specified in Policies with the Namespace specified in the environment.
+
+- **policies/kustomize-configs/policyset-namereference.yaml** - Updates the PolicySet name in all PlacementBinding to correct for name changed by the suffix specified in the environment.
+
+### Important Items
+
+- It is important the `policies/acm-placements/namespace.yaml` file remains where it is and that it only namespace directly created by kustomize.
+
+- The field `policyDefaults.namespace` must have the value `policies` in the policy generator files for the namespace names to be consistent.

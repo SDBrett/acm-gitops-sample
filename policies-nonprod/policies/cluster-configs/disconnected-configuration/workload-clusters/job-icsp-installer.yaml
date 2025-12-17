@@ -1,0 +1,52 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: icsp-installer
+  namespace: disconnected-config
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      containers:
+        - name: icsp-installer
+          env:
+            - name: change_tracker_roi
+              value: '{{ fromConfigMap "disconnected-config" "redhat-operators-index-generated" "change_tracker" }}'
+            - name: change_tracker_coi
+              value: '{{ fromConfigMap "disconnected-config" "certified-operators-index-generated" "change_tracker" }}'
+          image: '{{hub fromConfigMap "" "quay-config" "host" hub}}/cache-registry-redhat-io/openshift4/ose-cli:v4.14.0'
+          command:
+            - /bin/bash
+            - '-c'
+            - for file in $(ls /data | grep icsp); do oc apply -f /data/$file; done
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: 200m
+          volumeMounts:
+            - name: config
+              mountPath: /data/
+      serviceAccountName: icsp-installer
+      restartPolicy: Never
+      volumes:
+        - name: config
+          projected:
+            sources:
+              - configMap:
+                  name: redhat-operators-index
+                  items:
+                    - key: icsp.yaml
+                      path: icsp-roi.yaml
+              - configMap:
+                  name: certified-operators-index
+                  items:
+                    - key: icsp.yaml
+                      path: icsp-coi.yaml
